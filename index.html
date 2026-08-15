@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Group Stats</title>
+<style>
+:root{
+  --ink:#0a0a0a;
+  --panel:#1b1917;
+  --edge-lit:#3d3830;
+  --amber:#ffb61e;
+  --amber-deep:#c98700;
+  --cream:#d8cfba;
+  --dim:#8a8172;
+  --stone-gap:#1d1a14;
+  --lvl:#ffff00;
+  --lvl-dim:#8f8a4a;
+  --serif:Georgia,"Times New Roman",serif;
+  --ui:"Trebuchet MS","Lucida Sans Unicode",Verdana,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:
+    radial-gradient(ellipse at 50% -10%, #2a2622 0%, transparent 55%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 1px, transparent 1px 3px),
+    var(--ink);
+  color:var(--cream);font-family:var(--ui);min-height:100vh;padding:0 0 40px;
+}
+.wrap{max-width:1340px;margin:0 auto;padding:0 16px}
+
+/* ---------------- masthead ---------------- */
+.masthead{
+  border-bottom:1px solid #000;
+  background:linear-gradient(180deg,#211e1a,#131211);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 4px 14px rgba(0,0,0,.6);
+  padding:18px 0 0;margin-bottom:22px;
+}
+.mast-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-bottom:14px}
+.crest{
+  width:44px;height:48px;flex:none;
+  background:linear-gradient(165deg,#c62222 0%,#8f1d1d 45%,#4d0e0e 100%);
+  clip-path:polygon(0 0,100% 0,100% 68%,50% 100%,0 68%);
+}
+.titles h1{
+  font-family:var(--serif);font-weight:700;font-size:clamp(19px,3.2vw,29px);line-height:1.05;
+  color:var(--amber);text-shadow:0 1px 0 #000, 0 0 22px rgba(255,182,30,.22);
+}
+.titles p{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-top:7px}
+.grow{flex:1 1 auto}
+
+.finder{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-bottom:14px}
+.field{
+  flex:1 1 240px;max-width:330px;font:inherit;font-size:13px;color:var(--cream);
+  padding:11px 13px;border-radius:2px;background:#0e0d0c;border:1px solid #35302a;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.6);
+}
+.field::placeholder{color:#5d564d}
+.field:focus{outline:none;border-color:var(--amber-deep);box-shadow:inset 0 2px 5px rgba(0,0,0,.6),0 0 0 2px rgba(255,182,30,.18)}
+
+.btn{
+  font-family:var(--ui);font-size:12.5px;font-weight:700;letter-spacing:.11em;
+  text-transform:uppercase;padding:12px 20px;cursor:pointer;border:0;border-radius:2px;white-space:nowrap;
+}
+.btn.gold{
+  color:#241a05;
+  background:linear-gradient(180deg,#ffd76a 0%,var(--amber) 42%,var(--amber-deep) 100%);
+  box-shadow:0 2px 0 #6d4a00, 0 3px 10px rgba(0,0,0,.55);
+}
+.btn.gold:hover:not(:disabled){background:linear-gradient(180deg,#ffe393 0%,#ffc542 42%,#d99400 100%)}
+.btn.quiet{color:var(--cream);background:linear-gradient(180deg,#332e29,#211e1b);box-shadow:inset 0 0 0 1px #4a443c,0 2px 0 #000}
+.btn.quiet:hover:not(:disabled){background:linear-gradient(180deg,#413b34,#2a2622)}
+.btn:active:not(:disabled){transform:translateY(2px);box-shadow:0 0 0 #000}
+.btn:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.btn:disabled{filter:saturate(.35) brightness(.75);cursor:progress}
+
+.status{font-size:12px;color:var(--dim);padding:0 0 14px;min-height:16px}
+.status.err{color:#ff7a5c}
+.status.ok{color:#7ddc57}
+
+.ledger{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border-top:1px solid #000;box-shadow:inset 0 -1px 0 var(--edge-lit)}
+.ledger div{padding:12px 4px 14px;text-align:center;border-left:1px solid #000}
+.ledger div:first-child{border-left:0}
+.ledger span{display:block;font-size:9.5px;letter-spacing:.19em;text-transform:uppercase;color:var(--dim);margin-bottom:5px}
+.ledger b{font-family:var(--serif);font-size:21px;color:var(--amber);text-shadow:0 1px 0 #000}
+.ledger small{display:block;margin-top:4px;font-size:9.5px;letter-spacing:.09em;color:#6f675c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------------- player cards ---------------- */
+.players{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.card{background:var(--panel);border:1px solid var(--edge-lit);box-shadow:0 6px 18px rgba(0,0,0,.55)}
+.card.loading{opacity:.5}
+.card.failed{border-color:#6b2a2a}
+
+.empty{
+  grid-column:1/-1;padding:52px 20px;text-align:center;
+  border:1px dashed #34302a;color:#6f675c;font-size:13px;line-height:1.8;
+}
+.empty b{display:block;font-family:var(--serif);font-size:17px;color:var(--dim);margin-bottom:6px}
+
+.plate{
+  display:flex;align-items:center;gap:9px;padding:11px 13px;
+  background:linear-gradient(180deg,#262320,#191715);
+  border-bottom:1px solid #000;box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
+.pname{
+  font-family:var(--serif);font-size:16px;font-weight:700;color:var(--amber);
+  text-shadow:0 1px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.card.failed .pname{color:#ff8a70}
+.cb{
+  flex:none;font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--dim);border:1px solid #000;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
+  background:rgba(0,0,0,.4);padding:4px 8px;border-radius:2px;
+}
+.rm{
+  flex:none;width:24px;height:24px;padding:0;cursor:pointer;border:0;border-radius:2px;
+  background:rgba(0,0,0,.35);box-shadow:inset 0 0 0 1px #3a352f;
+  color:#7d746a;font:700 15px/1 var(--ui);
+}
+.rm:hover,.rm:focus-visible{background:#5a1d1d;color:#ffd9d9;box-shadow:inset 0 0 0 1px #8f3030;outline:none}
+
+/* ---------- the in-game skills interface ---------- */
+.tab{padding:3px;background:var(--stone-gap);border-top:1px solid #000;border-bottom:1px solid #000}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.skill{
+  position:relative;display:flex;align-items:center;height:34px;padding:0 3px;
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/><feColorMatrix type='saturate' values='0'/></filter><rect width='60' height='60' filter='url(%23n)' opacity='.09'/></svg>"),
+    linear-gradient(160deg,#544937 0%,#453d31 40%,#372f26 100%);
+  box-shadow:inset 0 0 0 1px #241f18, inset 1px 1px 0 rgba(255,255,255,.06);
+}
+.ico{width:34%;flex:none;display:grid;place-items:center;height:100%}
+.ico img{max-width:20px;max-height:20px;image-rendering:pixelated;filter:drop-shadow(1px 1px 0 rgba(0,0,0,.75))}
+.nums{position:relative;flex:1 1 auto;height:100%}
+.nums::before{
+  content:"";position:absolute;left:6%;right:6%;top:50%;height:1px;
+  background:rgba(0,0,0,.6);box-shadow:0 1px 0 rgba(255,255,255,.09);transform:rotate(-34deg);
+}
+.cur,.max{position:absolute;font-size:13px;font-weight:700;line-height:1;color:var(--lvl);text-shadow:1px 1px 0 #000;font-variant-numeric:tabular-nums}
+.cur{left:0;top:5px}
+.max{right:2px;bottom:5px}
+.skill.zero .cur,.skill.zero .max{color:var(--lvl-dim)}
+
+.total{
+  padding:9px;text-align:center;margin-top:2px;
+  background:linear-gradient(160deg,#544937,#372f26);
+  box-shadow:inset 0 0 0 1px #241f18, inset 1px 1px 0 rgba(255,255,255,.06);
+  font-size:13px;font-weight:700;color:var(--lvl);text-shadow:1px 1px 0 #000;
+}
+
+.leads{padding:12px 13px 13px}
+.leads h2{font-size:9.5px;letter-spacing:.19em;text-transform:uppercase;color:var(--dim);font-weight:400;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid #2a2724}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:11px;font-weight:700;color:#2a1f06;padding:4px 8px;border-radius:2px;background:linear-gradient(180deg,#ffcf5c,var(--amber-deep));box-shadow:0 1px 0 #5e4000}
+.chip b{margin-left:5px;opacity:.62}
+.chip.tied{color:var(--cream);background:linear-gradient(180deg,#3a3531,#26221f);box-shadow:inset 0 0 0 1px #4a443c,0 1px 0 #000}
+.chip.tied::before{content:"=\00a0";opacity:.55}
+.none{font-size:11.5px;color:#6f675c}
+
+.foot{display:flex;justify-content:space-between;gap:10px;padding:9px 13px;font-size:10.5px;color:#6f675c;border-top:1px solid #2a2724}
+
+.colophon{margin-top:26px;padding-top:16px;border-top:1px solid #232019;font-size:11px;line-height:1.85;color:#5f584e}
+.colophon p+p{margin-top:6px}
+.colophon a{color:#8b7f68}
+
+@media (max-width:430px){
+  .skill{height:31px}
+  .cur,.max{font-size:12px}
+  .ico img{max-width:17px;max-height:17px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="wrap">
+    <div class="mast-row">
+      <div class="crest" aria-hidden="true"></div>
+      <div class="titles">
+        <h1>Group Stats</h1>
+        <p id="sub">No players yet</p>
+      </div>
+      <div class="grow"></div>
+      <button class="btn quiet" id="copyBtn">Copy link</button>
+      <button class="btn gold" id="updateBtn">Update all stats</button>
+    </div>
+
+    <div class="finder">
+      <input class="field" id="q" type="search" placeholder="Add a player by username" autocomplete="off" spellcheck="false" aria-label="Player username">
+      <button class="btn quiet" id="addBtn">Add player</button>
+    </div>
+
+    <div class="status" id="status"></div>
+
+    <div class="ledger">
+      <div><span>Combined total</span><b id="gTotal">&mdash;</b></div>
+      <div><span>Combined XP</span><b id="gXp">&mdash;</b></div>
+      <div><span>Highest combat</span><b id="gCb">&mdash;</b></div>
+      <div><span>Highest level</span><b id="gBest">&mdash;</b><small id="gBestWho"></small></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <main class="players" id="players"></main>
+  <div class="colophon">
+    <p>Levels come from the Wise Old Man API, which reads the official hiscores. <b>Update all stats</b> asks Wise Old Man to re-read them; each account has a 60 second cooldown, so back-to-back presses will report the existing numbers.</p>
+    <p>The roster lives in the address bar, so <b>Copy link</b> gives you a link that opens with exactly these players. Adding or removing someone changes the link.</p>
+    <p>Adding a player who has never been tracked will register them with Wise Old Man, which takes a few seconds longer the first time.</p>
+    <p>Current and maximum levels show the same value because the hiscores report only your real level, never boosts or drains.</p>
+    <p><b>Best in group</b> lists the skills where a player holds the roster's highest level, highest first. A chip marked <span style="color:#8b7f68">=</span> is a tie. Skills where everyone sits on the same level are omitted, since nobody leads them.</p>
+    <p>Skill icons served from the <a href="https://oldschool.runescape.wiki">Old School RuneScape Wiki</a>.</p>
+  </div>
+</div>
+
+<script>
+const API  = "https://api.wiseoldman.net/v2/players/";
+const ICON = "https://oldschool.runescape.wiki/images/";
+const MAX_PLAYERS = 12;
+
+// Optional. Loaded when the URL has no ?p= values, e.g. ["zezima","woox"]
+const DEFAULTS = [];
+
+/* In-game skills tab order: read across, three to a row. */
+const SKILLS = [
+  ["attack","Attack"],            ["hitpoints","Hitpoints"],   ["mining","Mining"],
+  ["strength","Strength"],        ["agility","Agility"],       ["smithing","Smithing"],
+  ["defence","Defence"],          ["herblore","Herblore"],     ["fishing","Fishing"],
+  ["ranged","Ranged"],            ["thieving","Thieving"],     ["cooking","Cooking"],
+  ["prayer","Prayer"],            ["crafting","Crafting"],     ["firemaking","Firemaking"],
+  ["magic","Magic"],              ["fletching","Fletching"],   ["woodcutting","Woodcutting"],
+  ["runecrafting","Runecraft"],   ["slayer","Slayer"],         ["farming","Farming"],
+  ["construction","Construction"],["hunter","Hunter"],         ["sailing","Sailing"]
+];
+
+let roster = [];                 // usernames, in display order
+const data  = new Map();         // username -> player payload
+const cards = new Map();         // username -> card element
+const $ = id => document.getElementById(id);
+
+const say  = (m,k) => { const s=$("status"); s.className="status"+(k?" "+k:""); s.textContent=m; };
+const busy = on => { $("updateBtn").disabled=on; $("addBtn").disabled=on; };
+const key  = n => n.trim().toLowerCase();
+
+function ago(iso){
+  if(!iso) return "never updated";
+  const s = Math.floor((Date.now()-new Date(iso))/1000);
+  if(s<90) return "just now";
+  if(s<5400) return Math.round(s/60)+" min ago";
+  if(s<172800) return Math.round(s/3600)+" hr ago";
+  return Math.round(s/86400)+" days ago";
+}
+const num   = n => n==null ? "\u2014" : n.toLocaleString("en-US");
+const short = n => n>=1e6 ? (n/1e6).toFixed(2)+"m" : n>=1000 ? Math.round(n/1000)+"k" : String(n);
+
+/* ---------------- url ---------------- */
+function syncUrl(){
+  const qs = roster.map(n => "p="+encodeURIComponent(n)).join("&");
+  history.replaceState(null,"", qs ? "?"+qs : location.pathname);
+  $("sub").textContent = roster.length
+    ? roster.length + (roster.length===1 ? " player" : " players")
+    : "No players yet";
+}
+
+/* ---------------- cards ---------------- */
+function shell(name){
+  const el = document.createElement("section");
+  el.className = "card loading";
+  el.innerHTML =
+    '<div class="plate"><div class="pname"></div><div class="grow"></div><div class="cb">CB \u2014</div>'+
+    '<button class="rm" type="button" title="Remove">\u00d7</button></div>'+
+    '<div class="tab"><div class="stats"></div><div class="total">Total level: <span class="tl">\u2014</span></div></div>'+
+    '<div class="leads"><h2>Best in group</h2><div class="chips"></div></div>'+
+    '<div class="foot"><span class="xp">\u2014 xp</span><span class="upd">loading\u2026</span></div>';
+  el.querySelector(".pname").textContent = name;
+  el.querySelector(".rm").setAttribute("aria-label","Remove "+name);
+  el.querySelector(".rm").addEventListener("click", () => remove(name));
+
+  const grid = el.querySelector(".stats");
+  SKILLS.forEach(([k,label]) => {
+    const b = document.createElement("div");
+    b.className="skill"; b.dataset.skill=k; b.title=label;
+    b.innerHTML = '<span class="ico"><img alt="" loading="lazy"></span>'+
+                  '<span class="nums"><span class="cur">\u2014</span><span class="max">\u2014</span></span>';
+    const img = b.querySelector("img");
+    img.src = ICON + label + "_icon.png";
+    img.onerror = () => { img.style.display="none"; };
+    grid.appendChild(b);
+  });
+  return el;
+}
+
+function emptyState(){
+  const host = $("players");
+  if(roster.length) { const e = host.querySelector(".empty"); if(e) e.remove(); return; }
+  host.innerHTML = '<div class="empty"><b>No players on the board</b>'+
+    'Add a username above to start. Everyone you add is kept in the link, so you can share the finished board with your group.</div>';
+}
+
+function paint(el, d){
+  el.classList.remove("loading","failed");
+  const sk = d.latestSnapshot?.data?.skills || {};
+  el.querySelectorAll(".skill").forEach(box => {
+    const lvl = sk[box.dataset.skill]?.level ?? null;
+    box.querySelector(".cur").textContent = lvl ?? "\u2014";
+    box.querySelector(".max").textContent = lvl ?? "\u2014";
+    box.classList.toggle("zero", lvl===1 || lvl==null);
+  });
+  el.querySelector(".pname").textContent = d.displayName || d.username;
+  el.querySelector(".cb").textContent    = "CB " + (d.combatLevel ?? "\u2014");
+  el.querySelector(".tl").textContent    = num(sk.overall?.level);
+  el.querySelector(".xp").textContent    = short(d.exp||0) + " xp";
+  el.querySelector(".upd").textContent   = ago(d.updatedAt);
+}
+
+/* ---------------- derived figures ---------------- */
+/* Who tops the board in each skill. If everyone sits on the same level —
+   all four at Farming 1 — nobody leads it. Ties count, but are marked. */
+function leaders(){
+  const on = roster.filter(n => data.get(n));
+  on.forEach(n => {
+    const box = cards.get(n).querySelector(".chips");
+    if(on.length < 2){ box.innerHTML = '<div class="none">Add another player to compare.</div>'; }
+  });
+  if(on.length < 2) return;
+
+  const lvl = (n,k) => data.get(n).latestSnapshot?.data?.skills?.[k]?.level ?? 0;
+  const won = new Map(on.map(n => [n,[]]));
+  SKILLS.forEach(([k,label]) => {
+    const vals = on.map(n => lvl(n,k));
+    const top  = Math.max(...vals);
+    if(top <= 1) return;
+    if(vals.every(v => v===top)) return;
+    const holders = on.filter(n => lvl(n,k)===top);
+    holders.forEach(n => won.get(n).push({label, top, tied: holders.length>1}));
+  });
+
+  on.forEach(n => {
+    const box  = cards.get(n).querySelector(".chips");
+    const list = won.get(n).sort((a,b) => b.top-a.top);
+    box.innerHTML = "";
+    if(!list.length){
+      const p=document.createElement("div"); p.className="none";
+      p.textContent="Not top of the group in any skill yet."; box.appendChild(p); return;
+    }
+    list.forEach(s => {
+      const c=document.createElement("span");
+      c.className="chip"+(s.tied?" tied":"");
+      c.textContent=s.label;
+      if(s.tied) c.title="Tied for the group's highest";
+      const b=document.createElement("b"); b.textContent=s.top; c.appendChild(b);
+      box.appendChild(c);
+    });
+  });
+}
+
+/* Highest single skill level on the board. Ties happen both ways: several
+   skills level with each other, or several players level in one skill. */
+function highest(){
+  const on = roster.filter(n => data.get(n));
+  if(!on.length){ $("gBest").textContent="\u2014"; $("gBestWho").textContent=""; return; }
+  let top=0, hits=[];
+  on.forEach(n => {
+    const sk = data.get(n).latestSnapshot?.data?.skills || {};
+    SKILLS.forEach(([k,label]) => {
+      const lvl = sk[k]?.level ?? 0;
+      if(lvl>top){ top=lvl; hits=[{n,label}]; }
+      else if(lvl===top && top>0){ hits.push({n,label}); }
+    });
+  });
+  if(!top) return;
+  const skills=[...new Set(hits.map(h=>h.label))];
+  const who   =[...new Set(hits.map(h=>data.get(h.n).displayName||h.n))];
+  $("gBest").textContent    = (skills.length>2 ? skills.length+" skills" : skills.join(" & "))+" "+top;
+  $("gBestWho").textContent = who.length>2 ? who.length+" players" : who.join(", ");
+}
+
+function summarise(){
+  const all=[...data.values()].filter(Boolean);
+  if(!all.length){ ["gTotal","gXp","gCb","gBest"].forEach(i=>$(i).textContent="\u2014"); $("gBestWho").textContent=""; return; }
+  const totals = all.map(p => p.latestSnapshot?.data?.skills?.overall?.level || 0);
+  $("gTotal").textContent = num(totals.reduce((a,b)=>a+b,0));
+  $("gXp").textContent    = short(all.reduce((a,p)=>a+(p.exp||0),0));
+  $("gCb").textContent    = Math.max(...all.map(p=>p.combatLevel||0));
+  highest(); leaders();
+}
+
+/* ---------------- fetching ---------------- */
+async function fetchPlayer(name, refresh){
+  const url = API + encodeURIComponent(name);
+  if(refresh){
+    // POST tells Wise Old Man to re-read the hiscores. A rejection just means
+    // it was refreshed in the last minute, so fall through to a plain read.
+    try{ const r = await fetch(url,{method:"POST"}); if(r.ok) return {d: await r.json(), fresh:true}; }catch(_){}
+  }
+  const res = await fetch(url);
+  if(res.status === 404) return {missing:true};
+  if(!res.ok) throw new Error("HTTP "+res.status);
+  return {d: await res.json(), fresh:false};
+}
+
+/* Never tracked before? POST registers them, which is how you add a new account. */
+async function trackNew(name){
+  const r = await fetch(API + encodeURIComponent(name), {method:"POST"});
+  if(!r.ok) return null;
+  return r.json();
+}
+
+async function load(name, refresh){
+  const el = cards.get(name);
+  try{
+    const out = await fetchPlayer(name, refresh);
+    if(out.missing){ el.classList.remove("loading"); el.classList.add("failed");
+      el.querySelector(".upd").textContent = "not on the hiscores"; return "missing"; }
+    data.set(name, out.d); paint(el, out.d);
+    return refresh && !out.fresh ? "cached" : "ok";
+  }catch(err){
+    el.classList.remove("loading"); el.classList.add("failed");
+    el.querySelector(".upd").textContent = "could not load";
+    return "failed";
+  }
+}
+
+async function loadAll(refresh){
+  if(!roster.length){ summarise(); return; }
+  busy(true);
+  say(refresh ? "Asking Wise Old Man to re-read the hiscores\u2026" : "Loading stats\u2026");
+  const res = [];
+  for(const n of roster){
+    res.push([n, await load(n, refresh)]);
+    if(refresh) await new Promise(r=>setTimeout(r,400));   // stay inside the rate limit
+  }
+  summarise();
+  const bad    = res.filter(([,s])=>s==="failed"||s==="missing").map(([n])=>n);
+  const cached = res.filter(([,s])=>s==="cached").map(([n])=>n);
+  if(bad.length)         say("Trouble with: "+bad.join(", ")+". Check the spelling, or try again shortly.","err");
+  else if(cached.length) say("Updated. "+cached.join(", ")+" were refreshed within the last minute, so those show the existing numbers.");
+  else                   say(refresh?"All accounts re-read from the hiscores.":"Stats loaded.","ok");
+  busy(false);
+}
+
+/* ---------------- roster ---------------- */
+async function add(raw){
+  const name = raw.trim().replace(/\s+/g," ");
+  if(!name){ say("Type a username first.","err"); return; }
+  if(roster.some(n => key(n)===key(name))){ say(name+" is already on the board.","err"); return; }
+  if(roster.length >= MAX_PLAYERS){ say("That's the limit of "+MAX_PLAYERS+" players.","err"); return; }
+
+  busy(true);
+  say("Looking up "+name+"\u2026");
+  try{
+    let out = await fetchPlayer(name, false);
+    if(out.missing){
+      say(name+" hasn't been tracked before \u2014 registering them\u2026");
+      const created = await trackNew(name);
+      if(!created){
+        say("No account called \u201c"+name+"\u201d on the hiscores. Check the spelling.","err");
+        busy(false); return;
+      }
+      out = {d: created};
+    }
+    roster.push(name);
+    emptyState();
+    const el = shell(name);
+    cards.set(name, el);
+    $("players").appendChild(el);
+    data.set(name, out.d);
+    paint(el, out.d);
+    syncUrl(); summarise();
+    $("q").value = "";
+    say("Added "+(out.d.displayName||name)+".","ok");
+  }catch(err){
+    say("Could not reach Wise Old Man. Try again in a moment.","err");
+  }
+  busy(false);
+}
+
+function remove(name){
+  roster = roster.filter(n => n !== name);
+  const el = cards.get(name);
+  if(el) el.remove();
+  cards.delete(name); data.delete(name);
+  syncUrl(); emptyState(); summarise();
+  say("Removed "+name+".");
+}
+
+/* ---------------- wiring ---------------- */
+$("addBtn").addEventListener("click", () => add($("q").value));
+$("q").addEventListener("keydown", e => { if(e.key==="Enter") add($("q").value); });
+$("updateBtn").addEventListener("click", () => loadAll(true));
+$("copyBtn").addEventListener("click", async () => {
+  try{ await navigator.clipboard.writeText(location.href); say("Link copied.","ok"); }
+  catch(_){ say("Copy failed \u2014 the link is in the address bar.","err"); }
+});
+
+const fromUrl = new URLSearchParams(location.search).getAll("p").filter(Boolean);
+roster = (fromUrl.length ? fromUrl : DEFAULTS).slice(0, MAX_PLAYERS);
+syncUrl();
+emptyState();
+roster.forEach(n => { const el = shell(n); cards.set(n, el); $("players").appendChild(el); });
+loadAll(false);
+</script>
+</body>
+</html>
