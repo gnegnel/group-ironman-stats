@@ -57,18 +57,24 @@ body{
 .wrap{max-width:var(--col);margin:0 auto;padding:0 54px}
 
 /* ---------------- masthead ---------------- */
+/* No slab of its own: a scrim that fades to nothing lets the page's stone run
+   unbroken through the header, and still holds the title legible over it. */
 .masthead{
-  border-bottom:1px solid #000;
-  background:linear-gradient(180deg,rgba(33,30,26,.9),rgba(19,18,17,.9));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 4px 14px rgba(0,0,0,.6);
-  padding:18px 0 0;margin-bottom:22px;
+  background:linear-gradient(180deg,rgba(8,7,6,.58) 0%,rgba(8,7,6,.24) 58%,rgba(8,7,6,0) 100%);
+  border-bottom:1px solid rgba(0,0,0,.7);
+  box-shadow:0 1px 0 rgba(61,56,48,.35);
+  padding:20px 0 22px;margin-bottom:24px;
 }
-.mast-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-bottom:14px}
-.crest{
-  width:44px;height:48px;flex:none;
-  background:linear-gradient(165deg,#c62222 0%,#8f1d1d 45%,#4d0e0e 100%);
-  clip-path:polygon(0 0,100% 0,100% 68%,50% 100%,0 68%);
-}
+.mast-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-bottom:16px}
+/* The wiki's own badge, with a drawn helm behind it: the <img> deletes itself
+   if the file 404s or the wiki refuses the hotlink, and losing it stops the
+   adjacent-sibling rule below from matching, which uncovers the SVG. */
+.crest{flex:none;display:block;line-height:0}
+.crest img{height:50px;width:auto;image-rendering:pixelated}
+.crest img,.crest svg{display:block;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.6))}
+.crest img + svg{display:none}
+/* Keeps the two header actions together as one unit when the row wraps. */
+.mast-actions{display:flex;gap:8px;flex-wrap:wrap}
 .titles h1{
   font-family:var(--game);font-weight:700;font-size:32px;line-height:1.05;
   color:var(--amber);text-shadow:0 1px 0 #000, 0 0 22px rgba(255,182,30,.22);
@@ -79,7 +85,9 @@ body{
 .titles p,.ledger span,.ledger small,.leads h2{-webkit-font-smoothing:antialiased}
 .grow{flex:1 1 auto}
 
-.finder{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-bottom:14px}
+/* The field, its button and the reply to pressing it now share one row, so the
+   status line reads where the action happened instead of from a strip below. */
+.finder{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding-bottom:18px}
 .field{
   flex:1 1 240px;max-width:330px;font:inherit;font-size:16px;color:var(--cream);
   padding:11px 13px;border-radius:2px;background:#0e0d0c;border:1px solid #35302a;
@@ -104,13 +112,25 @@ body{
 .btn:focus-visible{outline:2px solid #fff;outline-offset:3px}
 .btn:disabled{filter:saturate(.35) brightness(.75);cursor:progress}
 
-.status{font-size:16px;color:var(--dim);padding:0 0 14px;min-height:18px}
+/* say() rewrites this element's class list, so every rule has to hang off
+   .status itself rather than a wrapper class. */
+.status{flex:1 1 240px;min-width:0;font-size:16px;color:var(--dim);min-height:18px}
 .status.err{color:#ff7a5c}
 .status.ok{color:#7ddc57}
 
-.ledger{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border-top:1px solid #000;box-shadow:inset 0 -1px 0 var(--edge-lit)}
-.ledger div{padding:12px 4px 14px;text-align:center;border-left:1px solid #000}
-.ledger div:first-child{border-left:0}
+/* Given the same panel material as a player card, so the group's figures read
+   as the first card on the board rather than as part of the page furniture. */
+.ledger{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px;background:#000;border:1px solid var(--edge-lit);
+  box-shadow:0 6px 18px rgba(0,0,0,.55);
+}
+/* The 1px grid gap draws the dividers, so wrapped rows get separated too. */
+.ledger div{
+  padding:12px 6px 14px;text-align:center;
+  background:linear-gradient(180deg,#262320,#191715);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.045);
+}
 .ledger span{display:block;font-family:var(--ui);font-size:9.5px;letter-spacing:.19em;text-transform:uppercase;color:var(--dim);margin-bottom:5px}
 .ledger b{font-family:var(--game);font-weight:700;font-size:32px;line-height:1.1;color:var(--amber);text-shadow:0 1px 0 #000}
 .ledger small{display:block;font-family:var(--ui);margin-top:4px;font-size:9.5px;letter-spacing:.09em;color:#6f675c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -211,22 +231,23 @@ body{
 <div class="masthead">
   <div class="wrap">
     <div class="mast-row">
-      <div class="crest" aria-hidden="true"></div>
+      <span class="crest"><img src="https://oldschool.runescape.wiki/images/Group_ironman_chat_badge.png" alt="" referrerpolicy="no-referrer" onerror="this.remove()"><svg viewBox="0 0 16 18" width="50" height="50" aria-hidden="true" focusable="false" shape-rendering="crispEdges"><path fill="#0e1013" d="M5 0h6v1h-6zM3 1h2v1h-2zM11 1h2v1h-2zM2 2h1v1h-1zM13 2h1v1h-1zM1 3h1v1h-1zM14 3h1v1h-1zM1 4h1v1h-1zM14 4h1v1h-1zM0 5h1v1h-1zM15 5h1v1h-1zM0 6h1v1h-1zM15 6h1v1h-1zM0 7h1v1h-1zM15 7h1v1h-1zM0 8h1v1h-1zM15 8h1v1h-1zM0 9h1v1h-1zM15 9h1v1h-1zM0 10h1v1h-1zM15 10h1v1h-1zM0 11h1v1h-1zM15 11h1v1h-1zM0 12h1v1h-1zM15 12h1v1h-1zM1 13h1v1h-1zM14 13h1v1h-1zM1 14h1v1h-1zM14 14h1v1h-1zM2 15h1v1h-1zM13 15h1v1h-1zM2 16h1v1h-1zM13 16h1v1h-1zM4 17h8v1h-8z"/><path fill="#464d54" d="M13 3h1v1h-1zM13 4h1v1h-1zM13 5h2v1h-2zM14 6h1v1h-1zM14 7h1v1h-1zM8 8h1v1h-1zM14 8h1v1h-1zM8 9h1v1h-1zM14 9h1v1h-1zM8 10h1v1h-1zM14 10h1v1h-1zM8 11h1v1h-1zM14 11h1v1h-1zM14 12h1v1h-1zM2 14h1v1h-1zM13 14h1v1h-1zM3 15h1v1h-1zM12 15h1v1h-1zM3 16h2v1h-2zM11 16h2v1h-2z"/><path fill="#727a82" d="M11 2h2v1h-2zM9 3h4v1h-4zM7 4h6v1h-6zM5 5h8v1h-8zM4 6h10v1h-10zM3 7h11v1h-11zM2 8h1v1h-1zM13 8h1v1h-1zM2 9h1v1h-1zM13 9h1v1h-1zM2 10h1v1h-1zM13 10h1v1h-1zM2 11h5v1h-5zM9 11h5v1h-5zM2 12h12v1h-12zM2 13h12v1h-12zM3 14h10v1h-10zM4 15h8v1h-8zM5 16h6v1h-6z"/><path fill="#9ba4ac" d="M5 1h6v1h-6zM3 2h8v1h-8zM2 3h7v1h-7zM2 4h5v1h-5zM1 5h4v1h-4zM1 6h3v1h-3zM1 7h2v1h-2zM1 8h1v1h-1zM7 8h1v1h-1zM1 9h1v1h-1zM7 9h1v1h-1zM1 10h1v1h-1zM7 10h1v1h-1zM1 11h1v1h-1zM7 11h1v1h-1zM1 12h1v1h-1z"/><path fill="#07080a" d="M3 8h4v1h-4zM9 8h4v1h-4zM3 9h4v1h-4zM9 9h4v1h-4zM3 10h4v1h-4zM9 10h4v1h-4z"/></svg></span>
       <div class="titles">
         <h1>Group Stats</h1>
         <p id="sub">No players yet</p>
       </div>
       <div class="grow"></div>
-      <button class="btn quiet" id="copyBtn">Copy link</button>
-      <button class="btn gold" id="updateBtn">Update all stats</button>
+      <div class="mast-actions">
+        <button class="btn quiet" id="copyBtn">Copy link</button>
+        <button class="btn gold" id="updateBtn">Update all stats</button>
+      </div>
     </div>
 
     <div class="finder">
       <input class="field" id="q" type="search" placeholder="Add a player by username" autocomplete="off" spellcheck="false" aria-label="Player username">
       <button class="btn quiet" id="addBtn">Add player</button>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
     </div>
-
-    <div class="status" id="status"></div>
 
     <div class="ledger">
       <div><span>Combined total</span><b id="gTotal">&mdash;</b></div>
