@@ -5,6 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Group Stats</title>
 <style>
+/* RuneStar's extraction of the client's own fonts. unitsPerEm is 16 on
+   Plain/Bold and 32 on Quill, so glyphs land on whole pixels only at whole
+   multiples of those sizes — that is why the type scale below sticks to
+   16 and 32 rather than the 11-13px it used before. */
+@font-face{
+  font-family:"RuneScape";font-weight:400;font-style:normal;font-display:swap;
+  src:url("fonts/RuneScape-Plain-12.ttf") format("truetype");
+}
+@font-face{
+  font-family:"RuneScape";font-weight:700;font-style:normal;font-display:swap;
+  src:url("fonts/RuneScape-Bold-12.ttf") format("truetype");
+}
+@font-face{
+  font-family:"RuneScape Quill";font-weight:400;font-style:normal;font-display:swap;
+  src:url("fonts/RuneScape-Quill.ttf") format("truetype");
+}
 :root{
   --ink:#0a0a0a;
   --panel:#1b1917;
@@ -16,24 +32,34 @@
   --stone-gap:#1d1a14;
   --lvl:#ffff00;
   --lvl-dim:#8f8a4a;
+  --col:1180px;
   --serif:Georgia,"Times New Roman",serif;
+  --game:"RuneScape","Trebuchet MS",Verdana,sans-serif;
+  --quill:"RuneScape Quill",Georgia,serif;
+  /* Kept for the small letter-spaced caps labels, where the pixel font would
+     have to jump to 16px and blow out the layout. */
   --ui:"Trebuchet MS","Lucida Sans Unicode",Verdana,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
 body{
   background:
-    radial-gradient(ellipse at 50% -10%, #2a2622 0%, transparent 55%),
-    repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at 50% -10%, rgba(42,38,34,.75) 0%, transparent 55%),
+    linear-gradient(rgba(0,0,0,.26), rgba(0,0,0,.26)),
+    url("assets/bg2.jpg") repeat-y center top,
     var(--ink);
-  color:var(--cream);font-family:var(--ui);min-height:100vh;padding:0 0 40px;
+  /* The plate is 910px of stone between two vine pillars; widening it to the
+     content column keeps the pillars on the column edge at any viewport. */
+  background-size:auto, auto, var(--col) auto, auto;
+  color:var(--cream);font-family:var(--game);font-size:16px;min-height:100vh;padding:0 0 40px;
+  -webkit-font-smoothing:none;
 }
-.wrap{max-width:1340px;margin:0 auto;padding:0 16px}
+.wrap{max-width:var(--col);margin:0 auto;padding:0 54px}
 
 /* ---------------- masthead ---------------- */
 .masthead{
   border-bottom:1px solid #000;
-  background:linear-gradient(180deg,#211e1a,#131211);
+  background:linear-gradient(180deg,rgba(33,30,26,.9),rgba(19,18,17,.9));
   box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 4px 14px rgba(0,0,0,.6);
   padding:18px 0 0;margin-bottom:22px;
 }
@@ -44,15 +70,18 @@ body{
   clip-path:polygon(0 0,100% 0,100% 68%,50% 100%,0 68%);
 }
 .titles h1{
-  font-family:var(--serif);font-weight:700;font-size:clamp(19px,3.2vw,29px);line-height:1.05;
+  font-family:var(--game);font-weight:700;font-size:32px;line-height:1.05;
   color:var(--amber);text-shadow:0 1px 0 #000, 0 0 22px rgba(255,182,30,.22);
 }
-.titles p{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-top:7px}
+.titles p{font-family:var(--ui);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-top:7px}
+/* Turning smoothing off suits the bitmap font but shreds these sub-12px
+   caps, so they opt back into antialiasing. */
+.titles p,.ledger span,.ledger small,.leads h2{-webkit-font-smoothing:antialiased}
 .grow{flex:1 1 auto}
 
 .finder{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-bottom:14px}
 .field{
-  flex:1 1 240px;max-width:330px;font:inherit;font-size:13px;color:var(--cream);
+  flex:1 1 240px;max-width:330px;font:inherit;font-size:16px;color:var(--cream);
   padding:11px 13px;border-radius:2px;background:#0e0d0c;border:1px solid #35302a;
   box-shadow:inset 0 2px 5px rgba(0,0,0,.6);
 }
@@ -60,8 +89,8 @@ body{
 .field:focus{outline:none;border-color:var(--amber-deep);box-shadow:inset 0 2px 5px rgba(0,0,0,.6),0 0 0 2px rgba(255,182,30,.18)}
 
 .btn{
-  font-family:var(--ui);font-size:12.5px;font-weight:700;letter-spacing:.11em;
-  text-transform:uppercase;padding:12px 20px;cursor:pointer;border:0;border-radius:2px;white-space:nowrap;
+  font-family:var(--game);font-size:16px;font-weight:700;letter-spacing:.03em;
+  text-transform:uppercase;padding:10px 20px;cursor:pointer;border:0;border-radius:2px;white-space:nowrap;
 }
 .btn.gold{
   color:#241a05;
@@ -75,16 +104,16 @@ body{
 .btn:focus-visible{outline:2px solid #fff;outline-offset:3px}
 .btn:disabled{filter:saturate(.35) brightness(.75);cursor:progress}
 
-.status{font-size:12px;color:var(--dim);padding:0 0 14px;min-height:16px}
+.status{font-size:16px;color:var(--dim);padding:0 0 14px;min-height:18px}
 .status.err{color:#ff7a5c}
 .status.ok{color:#7ddc57}
 
 .ledger{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border-top:1px solid #000;box-shadow:inset 0 -1px 0 var(--edge-lit)}
 .ledger div{padding:12px 4px 14px;text-align:center;border-left:1px solid #000}
 .ledger div:first-child{border-left:0}
-.ledger span{display:block;font-size:9.5px;letter-spacing:.19em;text-transform:uppercase;color:var(--dim);margin-bottom:5px}
-.ledger b{font-family:var(--serif);font-size:21px;color:var(--amber);text-shadow:0 1px 0 #000}
-.ledger small{display:block;margin-top:4px;font-size:9.5px;letter-spacing:.09em;color:#6f675c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ledger span{display:block;font-family:var(--ui);font-size:9.5px;letter-spacing:.19em;text-transform:uppercase;color:var(--dim);margin-bottom:5px}
+.ledger b{font-family:var(--game);font-weight:700;font-size:32px;line-height:1.1;color:var(--amber);text-shadow:0 1px 0 #000}
+.ledger small{display:block;font-family:var(--ui);margin-top:4px;font-size:9.5px;letter-spacing:.09em;color:#6f675c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ---------------- player cards ---------------- */
 .players{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
@@ -94,9 +123,9 @@ body{
 
 .empty{
   grid-column:1/-1;padding:52px 20px;text-align:center;
-  border:1px dashed #34302a;color:#6f675c;font-size:13px;line-height:1.8;
+  border:1px dashed #34302a;color:#6f675c;font-size:16px;line-height:1.6;
 }
-.empty b{display:block;font-family:var(--serif);font-size:17px;color:var(--dim);margin-bottom:6px}
+.empty b{display:block;font-family:var(--quill);font-size:32px;color:var(--dim);margin-bottom:6px}
 
 .plate{
   display:flex;align-items:center;gap:9px;padding:11px 13px;
@@ -104,14 +133,14 @@ body{
   border-bottom:1px solid #000;box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
 }
 .pname{
-  font-family:var(--serif);font-size:16px;font-weight:700;color:var(--amber);
+  font-family:var(--game);font-size:16px;font-weight:700;color:var(--amber);
   text-shadow:0 1px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .card.failed .pname{color:#ff8a70}
 .cb{
-  flex:none;font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;
+  flex:none;font-family:var(--game);font-size:16px;font-weight:700;
   color:var(--dim);border:1px solid #000;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
-  background:rgba(0,0,0,.4);padding:4px 8px;border-radius:2px;
+  background:rgba(0,0,0,.4);padding:2px 8px;border-radius:2px;
 }
 .rm{
   flex:none;width:24px;height:24px;padding:0;cursor:pointer;border:0;border-radius:2px;
@@ -137,36 +166,41 @@ body{
   content:"";position:absolute;left:6%;right:6%;top:50%;height:1px;
   background:rgba(0,0,0,.6);box-shadow:0 1px 0 rgba(255,255,255,.09);transform:rotate(-34deg);
 }
-.cur,.max{position:absolute;font-size:13px;font-weight:700;line-height:1;color:var(--lvl);text-shadow:1px 1px 0 #000;font-variant-numeric:tabular-nums}
-.cur{left:0;top:5px}
-.max{right:2px;bottom:5px}
+.cur,.max{position:absolute;font-family:var(--game);font-size:16px;font-weight:700;line-height:1;color:var(--lvl);text-shadow:1px 1px 0 #000}
+.cur{left:0;top:4px}
+.max{right:2px;bottom:4px}
 .skill.zero .cur,.skill.zero .max{color:var(--lvl-dim)}
 
 .total{
   padding:9px;text-align:center;margin-top:2px;
   background:linear-gradient(160deg,#544937,#372f26);
   box-shadow:inset 0 0 0 1px #241f18, inset 1px 1px 0 rgba(255,255,255,.06);
-  font-size:13px;font-weight:700;color:var(--lvl);text-shadow:1px 1px 0 #000;
+  font-family:var(--game);font-size:16px;font-weight:700;color:var(--lvl);text-shadow:1px 1px 0 #000;
 }
 
 .leads{padding:12px 13px 13px}
-.leads h2{font-size:9.5px;letter-spacing:.19em;text-transform:uppercase;color:var(--dim);font-weight:400;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid #2a2724}
+.leads h2{font-family:var(--ui);font-size:9.5px;letter-spacing:.19em;text-transform:uppercase;color:var(--dim);font-weight:400;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid #2a2724}
 .chips{display:flex;flex-wrap:wrap;gap:5px}
-.chip{font-size:11px;font-weight:700;color:#2a1f06;padding:4px 8px;border-radius:2px;background:linear-gradient(180deg,#ffcf5c,var(--amber-deep));box-shadow:0 1px 0 #5e4000}
+.chip{font-family:var(--game);font-size:16px;font-weight:700;color:#2a1f06;padding:1px 7px;border-radius:2px;background:linear-gradient(180deg,#ffcf5c,var(--amber-deep));box-shadow:0 1px 0 #5e4000}
 .chip b{margin-left:5px;opacity:.62}
 .chip.tied{color:var(--cream);background:linear-gradient(180deg,#3a3531,#26221f);box-shadow:inset 0 0 0 1px #4a443c,0 1px 0 #000}
 .chip.tied::before{content:"=\00a0";opacity:.55}
-.none{font-size:11.5px;color:#6f675c}
+.none{font-size:16px;color:#6f675c}
 
-.foot{display:flex;justify-content:space-between;gap:10px;padding:9px 13px;font-size:10.5px;color:#6f675c;border-top:1px solid #2a2724}
+.foot{display:flex;justify-content:space-between;gap:10px;padding:8px 13px;font-size:16px;color:#6f675c;border-top:1px solid #2a2724}
 
-.colophon{margin-top:26px;padding-top:16px;border-top:1px solid #232019;font-size:11px;line-height:1.85;color:#5f584e}
+.colophon{margin-top:26px;padding-top:16px;border-top:1px solid #232019;font-size:16px;line-height:1.5;color:#5f584e}
 .colophon p+p{margin-top:6px}
 .colophon a{color:#8b7f68}
 
+/* Below the plate's own width the pillars are cropped off-screen anyway, so
+   the gutter that framed them goes back to a normal page margin. */
+@media (max-width:900px){
+  .wrap{padding:0 16px}
+  .ledger b{font-size:16px}
+}
 @media (max-width:430px){
-  .skill{height:31px}
-  .cur,.max{font-size:12px}
+  .skill{height:32px}
   .ico img{max-width:17px;max-height:17px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -268,7 +302,7 @@ function shell(name){
     '<button class="rm" type="button" title="Remove">\u00d7</button></div>'+
     '<div class="tab"><div class="stats"></div><div class="total">Total level: <span class="tl">\u2014</span></div></div>'+
     '<div class="leads"><h2>Best in group</h2><div class="chips"></div></div>'+
-    '<div class="foot"><span class="xp">\u2014 xp</span><span class="upd">loading\u2026</span></div>';
+    '<div class="foot"><span class="xp">\u2014 xp</span><span class="upd">loading...</span></div>';
   el.querySelector(".pname").textContent = name;
   el.querySelector(".rm").setAttribute("aria-label","Remove "+name);
   el.querySelector(".rm").addEventListener("click", () => remove(name));
@@ -421,7 +455,7 @@ async function load(name, refresh){
 async function loadAll(refresh){
   if(!roster.length){ summarise(); return; }
   busy(true);
-  say(refresh ? "Asking Wise Old Man to re-read the hiscores\u2026" : "Loading stats\u2026");
+  say(refresh ? "Asking Wise Old Man to re-read the hiscores..." : "Loading stats...");
   const res = [];
   for(const n of roster){
     res.push([n, await load(n, refresh)]);
@@ -444,11 +478,11 @@ async function add(raw){
   if(roster.length >= MAX_PLAYERS){ say("That's the limit of "+MAX_PLAYERS+" players.","err"); return; }
 
   busy(true);
-  say("Looking up "+name+"\u2026");
+  say("Looking up "+name+"...");
   try{
     let out = await fetchPlayer(name, false);
     if(out.missing){
-      say(name+" hasn't been tracked before \u2014 registering them\u2026");
+      say(name+" hasn't been tracked before \u2014 registering them...");
       const created = await trackNew(name);
       if(!created){
         say("No account called \u201c"+name+"\u201d on the hiscores. Check the spelling.","err");

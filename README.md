@@ -15,7 +15,7 @@ Works for any set of accounts — an ironman group, a clan's core members, or ju
 
 ## Dependencies
 
-Nothing to install — no npm, no build step, no framework. The only runtime dependency is the [Wise Old Man API](https://docs.wiseoldman.net/), which supplies every level, XP total and combat level on the board, so the page needs an internet connection to show anything. Skill icons are stored in `icons/` rather than fetched from the wiki.
+Nothing to install — no npm, no build step, no framework. The only runtime dependency is the [Wise Old Man API](https://docs.wiseoldman.net/), which supplies every level, XP total and combat level on the board, so the page needs an internet connection to show anything. Everything else is served from the repo: skill icons in `icons/`, the stone background in `assets/`, and the fonts in `fonts/`.
 
 ## Known limitations
 
@@ -29,8 +29,12 @@ Nothing to install — no npm, no build step, no framework. The only runtime dep
 
 Skill icons come from the [Old School RuneScape Wiki](https://oldschool.runescape.wiki), available under [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/). Stats come from [Wise Old Man](https://wiseoldman.net), an open-source community project.
 
+The typeface is the game client's own UI font, extracted by [RuneStar/fonts](https://github.com/RuneStar/fonts) and released under CC0. Plain 12 and Bold 12 are drawn on a 16-unit em and Quill on a 32-unit em, so the stylesheet keeps text at whole multiples of 16px and 32px — at any other size the glyphs land off the pixel grid and go soft.
+
+`assets/bg2.jpg` is the stone-and-vines panel from the Old School RuneScape website. Unlike the icons and the fonts it carries no open licence — it is Jagex artwork, reused here on the same fan-project footing as the rest of the page.
+
 This is an unofficial fan project with no connection to Jagex. RuneScape and Old School RuneScape are trademarks of Jagex Limited.
 
 ## Licence
 
-The code in this repository is MIT licensed — see `LICENSE`. That covers the code only, not the icons or any other third-party content it links to.
+The code in this repository is MIT licensed — see `LICENSE`. That covers the code only, not the icons, fonts, background or any other third-party content it bundles.
