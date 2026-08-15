@@ -13,67 +13,9 @@ Works for any set of accounts — an ironman group, a clan's core members, or ju
 - A summary strip across the top: combined total level, combined XP, highest combat level, and the single highest skill level with who holds it
 - **Best in group** under each card: the skills where that player holds the roster's highest level, with ties marked
 
-## Deploying to GitHub Pages
-
-1. Create a new repository on GitHub.
-2. Copy `index.html` and `.nojekyll` into it and push to `main`.
-3. In the repository, go to **Settings → Pages**.
-4. Under **Build and deployment**, set **Source** to *Deploy from a branch*, pick `main` and the `/ (root)` folder, then **Save**.
-5. Wait a minute or two. Your board will be at `https://<your-username>.github.io/<repo-name>/`.
-
-`.nojekyll` tells GitHub to serve the files as-is rather than running them through Jekyll. Nothing here needs Jekyll, and it avoids surprises if a file is ever added whose name starts with an underscore.
-
-To share a specific roster, load the players you want and copy the URL from the address bar — it will look like:
-
-```
-https://you.github.io/osrs-group-stats/?p=zezima&p=some%20other%20name
-```
-
-### Other hosts
-
-Any static host works, since this is one self-contained file. Netlify, Cloudflare Pages, Vercel, or dragging the file onto [Netlify Drop](https://app.netlify.com/drop) all serve it without configuration.
-
 ## Dependencies
 
-**Nothing to install.** No npm, no build step, no bundler, no framework. `index.html` contains all the HTML, CSS and JavaScript. You can open it directly from your filesystem and it will work.
-
-At runtime it talks to two third-party services over the network:
-
-| Service | Used for | Notes |
-|---|---|---|
-| [Wise Old Man API](https://docs.wiseoldman.net/) v2 | Player levels, XP, combat level, last-updated time | Public, no API key needed for this usage |
-| [OSRS Wiki](https://oldschool.runescape.wiki) | The 24 skill icons | Hotlinked images; if one fails to load the box hides the icon and still shows the levels |
-
-Because both are fetched from the browser, the page needs an internet connection to show anything. There is no server component and no database.
-
-### About the Wise Old Man API
-
-- `GET /v2/players/{username}` reads a player's stored snapshot
-- `POST /v2/players/{username}` asks Wise Old Man to re-read that player from the official hiscores — this is what **Update all stats** does, and what registers a player who has never been tracked
-- Each account has a **60 second cooldown** between updates. Pressing the button again inside that window is handled: those players keep their existing numbers and the status line says so
-- Requests are spaced 400 ms apart to stay within the unauthenticated rate limit
-- Heavy or automated use should send an API key and a user agent; see their docs. This page does neither, which is fine for a handful of people refreshing occasionally
-
-## Configuration
-
-Everything adjustable sits near the top of the `<script>` block in `index.html`:
-
-```js
-const MAX_PLAYERS = 12;
-
-// Optional. Loaded when the URL has no ?p= values, e.g. ["zezima","woox"]
-const DEFAULTS = [];
-```
-
-`DEFAULTS` ships empty, so the bare link opens on an empty board and you build the roster from the input. If you would rather it always open on the same accounts, put their usernames in the array — quoted, comma separated, spaces kept as they appear in game:
-
-```js
-const DEFAULTS = ["first name", "second name", "third name"];
-```
-
-Either way, a URL with `?p=` values always wins over `DEFAULTS`, so a shared link opens on the roster it carries.
-
-The colours are CSS custom properties in `:root`. `--amber`, `--ink` and `--cream` control the page chrome; `--lvl` and the `--stone-*` values control the in-game panels.
+Nothing to install — no npm, no build step, no framework. The only runtime dependency is the [Wise Old Man API](https://docs.wiseoldman.net/), which supplies every level, XP total and combat level on the board, so the page needs an internet connection to show anything. Skill icons are stored in `icons/` rather than fetched from the wiki.
 
 ## Known limitations
 

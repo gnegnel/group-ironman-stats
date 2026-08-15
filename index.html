@@ -207,17 +207,12 @@ body{
   <main class="players" id="players"></main>
   <div class="colophon">
     <p>Levels come from the Wise Old Man API, which reads the official hiscores. <b>Update all stats</b> asks Wise Old Man to re-read them; each account has a 60 second cooldown, so back-to-back presses will report the existing numbers.</p>
-    <p>The roster lives in the address bar, so <b>Copy link</b> gives you a link that opens with exactly these players. Adding or removing someone changes the link.</p>
-    <p>Adding a player who has never been tracked will register them with Wise Old Man, which takes a few seconds longer the first time.</p>
-    <p>Current and maximum levels show the same value because the hiscores report only your real level, never boosts or drains.</p>
-    <p><b>Best in group</b> lists the skills where a player holds the roster's highest level, highest first. A chip marked <span style="color:#8b7f68">=</span> is a tie. Skills where everyone sits on the same level are omitted, since nobody leads them.</p>
-    <p>Skill icons served from the <a href="https://oldschool.runescape.wiki">Old School RuneScape Wiki</a>.</p>
   </div>
 </div>
 
 <script>
 const API  = "https://api.wiseoldman.net/v2/players/";
-const ICON = "https://oldschool.runescape.wiki/images/";
+const ICON = "icons/";
 const MAX_PLAYERS = 12;
 
 // Optional. Loaded when the URL has no ?p= values, e.g. ["zezima","woox"]
