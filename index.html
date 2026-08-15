@@ -5,56 +5,76 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Group Stats</title>
 <style>
-/* RuneStar's extraction of the client's own fonts. unitsPerEm is 16 on
-   Plain/Bold and 32 on Quill, so glyphs land on whole pixels only at whole
-   multiples of those sizes — that is why the type scale below sticks to
-   16 and 32 rather than the 11-13px it used before. */
+/* RuneStar's extraction of the client's own fonts. unitsPerEm is 16 on the
+   Plain/Bold faces and 32 on Quill, so glyphs land on whole pixels only at
+   whole multiples of those sizes. Everything here is therefore 16px, and
+   the card is scaled as a whole rather than by changing type size.
+
+   Plain 11 is the face the interface itself draws with: its digits advance
+   6px, which is exactly the spacing measured off the in-game skills tab.
+   Plain 12 is a pixel taller and is kept for the page chrome. */
 @font-face{
-  font-family:"RuneScape";font-weight:400;font-style:normal;font-display:swap;
+  font-family:"RS";font-weight:400;font-style:normal;font-display:block;
+  src:url("fonts/RuneScape-Plain-11.ttf") format("truetype");
+}
+@font-face{
+  font-family:"RS Page";font-weight:400;font-style:normal;font-display:swap;
   src:url("fonts/RuneScape-Plain-12.ttf") format("truetype");
 }
 @font-face{
-  font-family:"RuneScape";font-weight:700;font-style:normal;font-display:swap;
+  font-family:"RS Page";font-weight:700;font-style:normal;font-display:swap;
   src:url("fonts/RuneScape-Bold-12.ttf") format("truetype");
 }
 @font-face{
-  font-family:"RuneScape Quill";font-weight:400;font-style:normal;font-display:swap;
+  font-family:"RS Quill";font-weight:400;font-style:normal;font-display:swap;
   src:url("fonts/RuneScape-Quill.ttf") format("truetype");
 }
+
 :root{
-  --ink:#0a0a0a;
-  --panel:#1b1917;
-  --edge-lit:#3d3830;
-  --amber:#ffb61e;
-  --amber-deep:#c98700;
-  --cream:#d8cfba;
-  --dim:#8a8172;
-  --stone-gap:#1d1a14;
-  --lvl:#ffff00;
-  --lvl-dim:#8f8a4a;
-  --col:1180px;
-  --serif:Georgia,"Times New Roman",serif;
-  --game:"RuneScape","Trebuchet MS",Verdana,sans-serif;
-  --quill:"RuneScape Quill",Georgia,serif;
-  /* Kept for the small letter-spaced caps labels, where the pixel font would
-     have to jump to 16px and blow out the layout. */
+  /* Sampled straight out of the skills tab sprite. */
+  --frame:#575040;
+  --frame-lit:#7d7563;
+  --frame-dim:#4f4836;
+  --edge:#3e3529;
+  --bevel:#726451;
+  --stone:#52524d;
+
+  --orange:#ff981f;      /* interface headings */
+  --yellow:#ffff00;      /* levels */
+  --white:#ffffff;
+  --grey:#9f9f9f;
+  --red:#ff3d3d;
+  --green:#3dff3d;
+
+  --game:"RS","Courier New",monospace;
+  --page:"RS Page","Trebuchet MS",Verdana,sans-serif;
+  --quill:"RS Quill",Georgia,serif;
   --ui:"Trebuchet MS","Lucida Sans Unicode",Verdana,sans-serif;
+
+  --col:1180px;
+  --z:2;                 /* card zoom, set by fit() below */
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
 body{
   background:
     radial-gradient(ellipse at 50% -10%, rgba(42,38,34,.75) 0%, transparent 55%),
-    linear-gradient(rgba(0,0,0,.26), rgba(0,0,0,.26)),
+    linear-gradient(rgba(0,0,0,.3), rgba(0,0,0,.3)),
     url("assets/bg2.jpg") repeat-y center top,
-    var(--ink);
-  /* The plate is 910px of stone between two vine pillars; widening it to the
-     content column keeps the pillars on the column edge at any viewport. */
+    #0a0a0a;
   background-size:auto, auto, var(--col) auto, auto;
-  color:var(--cream);font-family:var(--game);font-size:16px;min-height:100vh;padding:0 0 40px;
+  color:#c8c2b4;font-family:var(--page);font-size:16px;min-height:100vh;padding:0 0 44px;
   -webkit-font-smoothing:none;
 }
 .wrap{max-width:var(--col);margin:0 auto;padding:0 54px}
+
+/* The client's own frame, nine-sliced out of the sprite's border, so the
+   page furniture is cut from the same material as the cards. */
+.framed{
+  border:9px solid transparent;
+  border-image:url("assets/osrs-frame.png") 9 fill repeat;
+  image-rendering:pixelated;
+}
 
 /* ---------------- masthead ---------------- */
 /* No slab of its own: a scrim that fades to nothing lets the page's stone run
@@ -67,62 +87,59 @@ body{
 }
 .mast-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-bottom:16px}
 /* Jagex's own badge, with a drawn helm behind it: the <img> deletes itself if
-   the attachment moves or the hotlink is refused, and losing it stops the
-   adjacent-sibling rule below from matching, which uncovers the SVG. */
+   it ever fails to load, and losing it stops the adjacent-sibling rule below
+   from matching, which uncovers the SVG. The badge is 10x13, so it is scaled
+   by a whole factor like everything else here rather than fitted to the SVG. */
 .crest{flex:none;display:block;line-height:0}
-.crest img{height:50px;width:auto;image-rendering:pixelated}
+.crest img{height:52px;width:auto;image-rendering:pixelated}
 .crest img,.crest svg{display:block;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.6))}
 .crest img + svg{display:none}
 /* Keeps the two header actions together as one unit when the row wraps. */
 .mast-actions{display:flex;gap:8px;flex-wrap:wrap}
 .titles h1{
-  font-family:var(--game);font-weight:700;font-size:32px;line-height:1.05;
-  color:var(--amber);text-shadow:0 1px 0 #000, 0 0 22px rgba(255,182,30,.22);
+  font-family:var(--page);font-weight:700;font-size:32px;line-height:1.05;
+  color:var(--orange);text-shadow:0 1px 0 #000, 0 0 22px rgba(255,152,31,.22);
 }
-.titles p{font-family:var(--ui);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-top:7px}
-/* Turning smoothing off suits the bitmap font but shreds these sub-12px
-   caps, so they opt back into antialiasing. */
-.titles p,.ledger span,.ledger small,.leads h2{-webkit-font-smoothing:antialiased}
+.titles p{font-family:var(--ui);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#8a8172;margin-top:7px}
+/* Smoothing is off for the bitmap faces, which shreds these sub-12px caps. */
+.titles p,.ledger span,.ledger small{-webkit-font-smoothing:antialiased}
 .grow{flex:1 1 auto}
 
 /* The field, its button and the reply to pressing it now share one row, so the
    status line reads where the action happened instead of from a strip below. */
 .finder{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding-bottom:18px}
 .field{
-  flex:1 1 240px;max-width:330px;font:inherit;font-size:16px;color:var(--cream);
-  padding:11px 13px;border-radius:2px;background:#0e0d0c;border:1px solid #35302a;
-  box-shadow:inset 0 2px 5px rgba(0,0,0,.6);
+  flex:1 1 240px;max-width:330px;font-family:var(--page);font-size:16px;color:var(--white);
+  padding:11px 13px;background:#0b0a09;border:1px solid var(--edge);
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.7);
 }
 .field::placeholder{color:#5d564d}
-.field:focus{outline:none;border-color:var(--amber-deep);box-shadow:inset 0 2px 5px rgba(0,0,0,.6),0 0 0 2px rgba(255,182,30,.18)}
+.field:focus{outline:none;border-color:var(--bevel);box-shadow:inset 0 2px 5px rgba(0,0,0,.7),0 0 0 2px rgba(255,152,31,.2)}
 
 .btn{
-  font-family:var(--game);font-size:16px;font-weight:700;letter-spacing:.03em;
-  text-transform:uppercase;padding:10px 20px;cursor:pointer;border:0;border-radius:2px;white-space:nowrap;
+  font-family:var(--page);font-size:16px;font-weight:700;
+  padding:10px 20px;cursor:pointer;white-space:nowrap;
+  color:var(--white);text-shadow:1px 1px 0 #000;
+  background:linear-gradient(180deg,var(--frame-lit),var(--frame) 45%,var(--frame-dim));
+  border:1px solid #000;box-shadow:inset 1px 1px 0 rgba(255,255,255,.14),0 2px 0 #17140e;
 }
-.btn.gold{
-  color:#241a05;
-  background:linear-gradient(180deg,#ffd76a 0%,var(--amber) 42%,var(--amber-deep) 100%);
-  box-shadow:0 2px 0 #6d4a00, 0 3px 10px rgba(0,0,0,.55);
-}
-.btn.gold:hover:not(:disabled){background:linear-gradient(180deg,#ffe393 0%,#ffc542 42%,#d99400 100%)}
-.btn.quiet{color:var(--cream);background:linear-gradient(180deg,#332e29,#211e1b);box-shadow:inset 0 0 0 1px #4a443c,0 2px 0 #000}
-.btn.quiet:hover:not(:disabled){background:linear-gradient(180deg,#413b34,#2a2622)}
-.btn:active:not(:disabled){transform:translateY(2px);box-shadow:0 0 0 #000}
-.btn:focus-visible{outline:2px solid #fff;outline-offset:3px}
-.btn:disabled{filter:saturate(.35) brightness(.75);cursor:progress}
+.btn:hover:not(:disabled){background:linear-gradient(180deg,#948b76,#67604e 45%,#5c5442);color:var(--orange)}
+.btn.gold{color:var(--orange)}
+.btn:active:not(:disabled){transform:translateY(2px);box-shadow:inset 1px 1px 0 rgba(255,255,255,.14)}
+.btn:focus-visible{outline:2px solid var(--orange);outline-offset:3px}
+.btn:disabled{filter:saturate(.4) brightness(.7);cursor:progress}
 
 /* say() rewrites this element's class list, so every rule has to hang off
    .status itself rather than a wrapper class. */
-.status{flex:1 1 240px;min-width:0;font-size:16px;color:var(--dim);min-height:18px}
-.status.err{color:#ff7a5c}
-.status.ok{color:#7ddc57}
+.status{flex:1 1 240px;min-width:0;font-size:16px;color:var(--grey);min-height:19px;text-shadow:1px 1px 0 #000}
+.status.err{color:var(--red)}
+.status.ok{color:var(--green)}
 
 /* Given the same panel material as a player card, so the group's figures read
    as the first card on the board rather than as part of the page furniture. */
 .ledger{
   display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-  gap:1px;background:#000;border:1px solid var(--edge-lit);
+  gap:1px;background:#000;border:1px solid var(--edge);
   box-shadow:0 6px 18px rgba(0,0,0,.55);
 }
 /* The 1px grid gap draws the dividers, so wrapped rows get separated too. */
@@ -131,97 +148,94 @@ body{
   background:linear-gradient(180deg,#262320,#191715);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.045);
 }
-.ledger span{display:block;font-family:var(--ui);font-size:9.5px;letter-spacing:.19em;text-transform:uppercase;color:var(--dim);margin-bottom:5px}
-.ledger b{font-family:var(--game);font-weight:700;font-size:32px;line-height:1.1;color:var(--amber);text-shadow:0 1px 0 #000}
-.ledger small{display:block;font-family:var(--ui);margin-top:4px;font-size:9.5px;letter-spacing:.09em;color:#6f675c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ledger span{display:block;font-family:var(--ui);font-size:9.5px;letter-spacing:.19em;text-transform:uppercase;color:#8a8172;margin-bottom:6px}
+.ledger b{font-family:var(--page);font-weight:700;font-size:32px;line-height:1.1;color:var(--orange);text-shadow:1px 1px 0 #000}
+.ledger small{display:block;font-family:var(--ui);margin-top:5px;font-size:9.5px;letter-spacing:.09em;color:#6f675c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* ---------------- player cards ---------------- */
-.players{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
-.card{background:var(--panel);border:1px solid var(--edge-lit);box-shadow:0 6px 18px rgba(0,0,0,.55)}
-.card.loading{opacity:.5}
-.card.failed{border-color:#6b2a2a}
+/* ---------------- the board ---------------- */
+.board{display:flex;flex-wrap:wrap;gap:22px;justify-content:center;align-items:flex-start}
 
 .empty{
-  grid-column:1/-1;padding:52px 20px;text-align:center;
-  border:1px dashed #34302a;color:#6f675c;font-size:16px;line-height:1.6;
+  flex:1 1 100%;padding:52px 20px;text-align:center;
+  border:1px dashed #34302a;color:#6f675c;font-size:16px;line-height:1.7;
 }
-.empty b{display:block;font-family:var(--quill);font-size:32px;color:var(--dim);margin-bottom:6px}
+.empty b{display:block;font-family:var(--quill);font-size:32px;color:#8a8172;margin-bottom:8px}
 
-.plate{
-  display:flex;align-items:center;gap:9px;padding:11px 13px;
-  background:linear-gradient(180deg,#262320,#191715);
-  border-bottom:1px solid #000;box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+/* Every measurement below is in the sprite's own pixels: the card is 204x311
+   because that is what the client draws, and zoom scales the whole thing by a
+   whole number so nothing lands on a half pixel. */
+.card{
+  zoom:var(--z);
+  width:204px;font-family:var(--game);font-size:16px;line-height:1;
+  filter:drop-shadow(0 3px 4px rgba(0,0,0,.55));
 }
-.pname{
-  font-family:var(--game);font-size:16px;font-weight:700;color:var(--amber);
-  text-shadow:0 1px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+/* Set by fit() whenever the zoom is not a whole number: see the note there. */
+.offgrid .card{-webkit-font-smoothing:antialiased}
+.card.loading .chrome{opacity:.45}
+.card.failed .pname{color:var(--red)}
+
+.chrome{
+  position:relative;width:204px;height:311px;
+  background:url("assets/skills-card.png") no-repeat 0 0;
+  image-rendering:pixelated;
 }
-.card.failed .pname{color:#ff8a70}
-.cb{
-  flex:none;font-family:var(--game);font-size:16px;font-weight:700;
-  color:var(--dim);border:1px solid #000;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
-  background:rgba(0,0,0,.4);padding:2px 8px;border-radius:2px;
-}
+.chrome>*{position:absolute}
+
+/* The three bars the sprite provides: name, total level, and a footer strip
+   built by repeating the total-level bar. Text sits 5px into each bar, and
+   Plain 11 puts a cap 3px below the top of its line box. */
+.pname{top:11px;left:14px;max-width:158px;color:var(--orange);text-shadow:1px 1px 0 #000;
+       white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rm{
-  flex:none;width:24px;height:24px;padding:0;cursor:pointer;border:0;border-radius:2px;
-  background:rgba(0,0,0,.35);box-shadow:inset 0 0 0 1px #3a352f;
-  color:#7d746a;font:700 15px/1 var(--ui);
+  top:9px;right:10px;width:17px;height:17px;padding:0;cursor:pointer;
+  border:0;background:none;color:#8b8378;font:16px/17px var(--game);text-align:center;
 }
-.rm:hover,.rm:focus-visible{background:#5a1d1d;color:#ffd9d9;box-shadow:inset 0 0 0 1px #8f3030;outline:none}
+.rm:hover,.rm:focus-visible{color:var(--red);outline:none}
 
-/* ---------- the in-game skills interface ---------- */
-.tab{padding:3px;background:var(--stone-gap);border-top:1px solid #000;border-bottom:1px solid #000}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
-.skill{
-  position:relative;display:flex;align-items:center;height:34px;padding:0 3px;
-  background:
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/><feColorMatrix type='saturate' values='0'/></filter><rect width='60' height='60' filter='url(%23n)' opacity='.09'/></svg>"),
-    linear-gradient(160deg,#544937 0%,#453d31 40%,#372f26 100%);
-  box-shadow:inset 0 0 0 1px #241f18, inset 1px 1px 0 rgba(255,255,255,.06);
+.grid{
+  left:9px;top:27px;display:grid;
+  grid-template-columns:repeat(3,60px);grid-auto-rows:29px;column-gap:3px;row-gap:1px;
 }
-.ico{width:34%;flex:none;display:grid;place-items:center;height:100%}
-.ico img{max-width:20px;max-height:20px;image-rendering:pixelated;filter:drop-shadow(1px 1px 0 rgba(0,0,0,.75))}
-.nums{position:relative;flex:1 1 auto;height:100%}
-.nums::before{
-  content:"";position:absolute;left:6%;right:6%;top:50%;height:1px;
-  background:rgba(0,0,0,.6);box-shadow:0 1px 0 rgba(255,255,255,.09);transform:rotate(-34deg);
+.tile{position:relative;width:60px;height:29px}
+.tile>i{
+  position:absolute;left:0;top:0;width:33px;height:29px;
+  background:url("assets/skill-icons.png") no-repeat 0 calc(var(--i) * -29px);
+  image-rendering:pixelated;
 }
-.cur,.max{position:absolute;font-family:var(--game);font-size:16px;font-weight:700;line-height:1;color:var(--lvl);text-shadow:1px 1px 0 #000}
-.cur{left:0;top:4px}
-.max{right:2px;bottom:4px}
-.skill.zero .cur,.skill.zero .max{color:var(--lvl-dim)}
+/* Level readouts straddle the engraved diagonal: the current level centres on
+   x38 with its cap on y4, the maximum 12px down and 12px right of it. The
+   horizontal position itself is set by place() below, which rounds the way
+   the client rounds — the left values here are the two-digit case, standing
+   in until place()
+   has real metrics to work from. */
+.cur,.max{position:absolute;color:var(--yellow);text-shadow:1px 1px 0 #000}
+.cur{top:1px;left:32px}
+.max{top:13px;left:44px}
 
-.total{
-  padding:9px;text-align:center;margin-top:2px;
-  background:linear-gradient(160deg,#544937,#372f26);
-  box-shadow:inset 0 0 0 1px #241f18, inset 1px 1px 0 rgba(255,255,255,.06);
-  font-family:var(--game);font-size:16px;font-weight:700;color:var(--lvl);text-shadow:1px 1px 0 #000;
-}
+.totalv{top:269px;left:64px;color:var(--yellow);text-shadow:1px 1px 0 #000}
+.cb {top:287px;left:14px;color:var(--white);text-shadow:1px 1px 0 #000}
+.xp {top:287px;right:14px;color:var(--white);text-shadow:1px 1px 0 #000}
 
-.leads{padding:12px 13px 13px}
-.leads h2{font-family:var(--ui);font-size:9.5px;letter-spacing:.19em;text-transform:uppercase;color:var(--dim);font-weight:400;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid #2a2724}
-.chips{display:flex;flex-wrap:wrap;gap:5px}
-.chip{font-family:var(--game);font-size:16px;font-weight:700;color:#2a1f06;padding:1px 7px;border-radius:2px;background:linear-gradient(180deg,#ffcf5c,var(--amber-deep));box-shadow:0 1px 0 #5e4000}
-.chip b{margin-left:5px;opacity:.62}
-.chip.tied{color:var(--cream);background:linear-gradient(180deg,#3a3531,#26221f);box-shadow:inset 0 0 0 1px #4a443c,0 1px 0 #000}
-.chip.tied::before{content:"=\00a0";opacity:.55}
-.none{font-size:16px;color:#6f675c}
+/* ---------------- the group comparison ---------------- */
+.leads{width:204px;margin-top:6px;background:#000;color:var(--white);font-size:16px}
+.leads h2{font-size:16px;font-weight:400;color:var(--orange);text-shadow:1px 1px 0 #000;margin-bottom:8px}
+.chips{display:flex;flex-wrap:wrap;gap:3px}
+.chip{color:var(--yellow);text-shadow:1px 1px 0 #000;white-space:nowrap}
+.chip::after{content:",";color:#6f675c}
+.chip:last-child::after{content:""}
+.chip b{font-weight:400;color:var(--white)}
+.chip.tied{color:var(--grey)}
+.chip.tied b{color:var(--grey)}
+.none,.upd{color:#8b8378;text-shadow:1px 1px 0 #000}
+.upd{display:block;margin-top:8px;font-size:16px}
 
-.foot{display:flex;justify-content:space-between;gap:10px;padding:8px 13px;font-size:16px;color:#6f675c;border-top:1px solid #2a2724}
+.colophon{margin-top:30px;padding-top:16px;border-top:1px solid #232019;font-size:16px;line-height:1.6;color:#6f675c}
+.colophon b{color:#9a9184}
+.colophon p+p{margin-top:10px}
 
-.colophon{margin-top:26px;padding-top:16px;border-top:1px solid #232019;font-size:16px;line-height:1.5;color:#5f584e}
-.colophon p+p{margin-top:6px}
-.colophon a{color:#8b7f68}
-
-/* Below the plate's own width the pillars are cropped off-screen anyway, so
-   the gutter that framed them goes back to a normal page margin. */
 @media (max-width:900px){
   .wrap{padding:0 16px}
   .ledger b{font-size:16px}
-}
-@media (max-width:430px){
-  .skill{height:32px}
-  .ico img{max-width:17px;max-height:17px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -231,21 +245,21 @@ body{
 <div class="masthead">
   <div class="wrap">
     <div class="mast-row">
-      <span class="crest"><img src="https://support.runescape.com/hc/article_attachments/27922172240657" alt="" referrerpolicy="no-referrer" onerror="this.remove()"><svg viewBox="0 0 16 18" width="50" height="50" aria-hidden="true" focusable="false" shape-rendering="crispEdges"><path fill="#150807" d="M5 0h6v1h-6zM3 1h2v1h-2zM11 1h2v1h-2zM2 2h1v1h-1zM13 2h1v1h-1zM1 3h1v1h-1zM14 3h1v1h-1zM1 4h1v1h-1zM14 4h1v1h-1zM0 5h1v1h-1zM15 5h1v1h-1zM0 6h1v1h-1zM15 6h1v1h-1zM0 7h1v1h-1zM15 7h1v1h-1zM0 8h1v1h-1zM15 8h1v1h-1zM0 9h1v1h-1zM15 9h1v1h-1zM0 10h1v1h-1zM15 10h1v1h-1zM0 11h1v1h-1zM15 11h1v1h-1zM0 12h1v1h-1zM15 12h1v1h-1zM1 13h1v1h-1zM14 13h1v1h-1zM1 14h1v1h-1zM14 14h1v1h-1zM2 15h1v1h-1zM13 15h1v1h-1zM2 16h1v1h-1zM13 16h1v1h-1zM4 17h8v1h-8z"/><path fill="#57110f" d="M13 3h1v1h-1zM13 4h1v1h-1zM13 5h2v1h-2zM14 6h1v1h-1zM14 7h1v1h-1zM8 8h1v1h-1zM14 8h1v1h-1zM8 9h1v1h-1zM14 9h1v1h-1zM8 10h1v1h-1zM14 10h1v1h-1zM8 11h1v1h-1zM14 11h1v1h-1zM14 12h1v1h-1zM2 14h1v1h-1zM13 14h1v1h-1zM3 15h1v1h-1zM12 15h1v1h-1zM3 16h2v1h-2zM11 16h2v1h-2z"/><path fill="#7d1a18" d="M11 2h2v1h-2zM9 3h4v1h-4zM7 4h6v1h-6zM5 5h8v1h-8zM4 6h10v1h-10zM3 7h11v1h-11zM2 8h1v1h-1zM13 8h1v1h-1zM2 9h1v1h-1zM13 9h1v1h-1zM2 10h1v1h-1zM13 10h1v1h-1zM2 11h5v1h-5zM9 11h5v1h-5zM2 12h12v1h-12zM2 13h12v1h-12zM3 14h10v1h-10zM4 15h8v1h-8zM5 16h6v1h-6z"/><path fill="#a52d27" d="M5 1h6v1h-6zM3 2h8v1h-8zM2 3h7v1h-7zM2 4h5v1h-5zM1 5h4v1h-4zM1 6h3v1h-3zM1 7h2v1h-2zM1 8h1v1h-1zM7 8h1v1h-1zM1 9h1v1h-1zM7 9h1v1h-1zM1 10h1v1h-1zM7 10h1v1h-1zM1 11h1v1h-1zM7 11h1v1h-1zM1 12h1v1h-1z"/><path fill="#080404" d="M3 8h4v1h-4zM9 8h4v1h-4zM3 9h4v1h-4zM9 9h4v1h-4zM3 10h4v1h-4zM9 10h4v1h-4z"/></svg></span>
+      <span class="crest"><img src="assets/gim-crest.png" alt="" onerror="this.remove()"><svg viewBox="0 0 16 18" width="50" height="50" aria-hidden="true" focusable="false" shape-rendering="crispEdges"><path fill="#150807" d="M5 0h6v1h-6zM3 1h2v1h-2zM11 1h2v1h-2zM2 2h1v1h-1zM13 2h1v1h-1zM1 3h1v1h-1zM14 3h1v1h-1zM1 4h1v1h-1zM14 4h1v1h-1zM0 5h1v1h-1zM15 5h1v1h-1zM0 6h1v1h-1zM15 6h1v1h-1zM0 7h1v1h-1zM15 7h1v1h-1zM0 8h1v1h-1zM15 8h1v1h-1zM0 9h1v1h-1zM15 9h1v1h-1zM0 10h1v1h-1zM15 10h1v1h-1zM0 11h1v1h-1zM15 11h1v1h-1zM0 12h1v1h-1zM15 12h1v1h-1zM1 13h1v1h-1zM14 13h1v1h-1zM1 14h1v1h-1zM14 14h1v1h-1zM2 15h1v1h-1zM13 15h1v1h-1zM2 16h1v1h-1zM13 16h1v1h-1zM4 17h8v1h-8z"/><path fill="#57110f" d="M13 3h1v1h-1zM13 4h1v1h-1zM13 5h2v1h-2zM14 6h1v1h-1zM14 7h1v1h-1zM8 8h1v1h-1zM14 8h1v1h-1zM8 9h1v1h-1zM14 9h1v1h-1zM8 10h1v1h-1zM14 10h1v1h-1zM8 11h1v1h-1zM14 11h1v1h-1zM14 12h1v1h-1zM2 14h1v1h-1zM13 14h1v1h-1zM3 15h1v1h-1zM12 15h1v1h-1zM3 16h2v1h-2zM11 16h2v1h-2z"/><path fill="#7d1a18" d="M11 2h2v1h-2zM9 3h4v1h-4zM7 4h6v1h-6zM5 5h8v1h-8zM4 6h10v1h-10zM3 7h11v1h-11zM2 8h1v1h-1zM13 8h1v1h-1zM2 9h1v1h-1zM13 9h1v1h-1zM2 10h1v1h-1zM13 10h1v1h-1zM2 11h5v1h-5zM9 11h5v1h-5zM2 12h12v1h-12zM2 13h12v1h-12zM3 14h10v1h-10zM4 15h8v1h-8zM5 16h6v1h-6z"/><path fill="#a52d27" d="M5 1h6v1h-6zM3 2h8v1h-8zM2 3h7v1h-7zM2 4h5v1h-5zM1 5h4v1h-4zM1 6h3v1h-3zM1 7h2v1h-2zM1 8h1v1h-1zM7 8h1v1h-1zM1 9h1v1h-1zM7 9h1v1h-1zM1 10h1v1h-1zM7 10h1v1h-1zM1 11h1v1h-1zM7 11h1v1h-1zM1 12h1v1h-1z"/><path fill="#080404" d="M3 8h4v1h-4zM9 8h4v1h-4zM3 9h4v1h-4zM9 9h4v1h-4zM3 10h4v1h-4zM9 10h4v1h-4z"/></svg></span>
       <div class="titles">
         <h1>Group Stats</h1>
         <p id="sub">No players yet</p>
       </div>
       <div class="grow"></div>
       <div class="mast-actions">
-        <button class="btn quiet" id="copyBtn">Copy link</button>
+        <button class="btn" id="copyBtn">Copy link</button>
         <button class="btn gold" id="updateBtn">Update all stats</button>
       </div>
     </div>
 
     <div class="finder">
       <input class="field" id="q" type="search" placeholder="Add a player by username" autocomplete="off" spellcheck="false" aria-label="Player username">
-      <button class="btn quiet" id="addBtn">Add player</button>
+      <button class="btn" id="addBtn">Add player</button>
       <p class="status" id="status" role="status" aria-live="polite"></p>
     </div>
 
@@ -259,21 +273,23 @@ body{
 </div>
 
 <div class="wrap">
-  <main class="players" id="players"></main>
+  <main class="board" id="players"></main>
   <div class="colophon">
-    <p>Levels come from the Wise Old Man API, which reads the official hiscores. <b>Update all stats</b> asks Wise Old Man to re-read them; each account has a 60 second cooldown, so back-to-back presses will report the existing numbers.</p>
+    <p>Levels come from the Wise Old Man API, which reads the official hiscores. The hiscores themselves only change when an account logs out, so anyone still online will show the levels they had when they last logged off. <b>Update all stats</b> asks Wise Old Man to re-read them; each account has a 60 second cooldown, so back-to-back presses will report the existing numbers.</p>
+    <p>This is an unofficial fan project with no connection to Jagex. RuneScape and Old School RuneScape are trademarks of Jagex Limited.</p>
   </div>
 </div>
 
 <script>
 const API  = "https://api.wiseoldman.net/v2/players/";
-const ICON = "icons/";
 const MAX_PLAYERS = 12;
 
 // Optional. Loaded when the URL has no ?p= values, e.g. ["zezima","woox"]
 const DEFAULTS = [];
 
-/* In-game skills tab order: read across, three to a row. */
+/* In-game skills tab order: read across, three to a row. The index into this
+   list is also the row into assets/skill-icons.png, which was sliced out of
+   the sprite in the same order. */
 const SKILLS = [
   ["attack","Attack"],            ["hitpoints","Hitpoints"],   ["mining","Mining"],
   ["strength","Strength"],        ["agility","Agility"],       ["smithing","Smithing"],
@@ -297,13 +313,70 @@ const key  = n => n.trim().toLowerCase();
 function ago(iso){
   if(!iso) return "never updated";
   const s = Math.floor((Date.now()-new Date(iso))/1000);
-  if(s<90) return "just now";
-  if(s<5400) return Math.round(s/60)+" min ago";
-  if(s<172800) return Math.round(s/3600)+" hr ago";
-  return Math.round(s/86400)+" days ago";
+  if(s<90) return "updated just now";
+  if(s<5400) return "updated "+Math.round(s/60)+" min ago";
+  if(s<172800) return "updated "+Math.round(s/3600)+" hr ago";
+  return "updated "+Math.round(s/86400)+" days ago";
 }
-const num   = n => n==null ? "\u2014" : n.toLocaleString("en-US");
+const num   = n => n==null ? "—" : n.toLocaleString("en-US");
 const short = n => n>=1e6 ? (n/1e6).toFixed(2)+"m" : n>=1000 ? Math.round(n/1000)+"k" : String(n);
+
+/* Centring a readout on the panel. Plain 11 advances in whole pixels, so the
+   client can place the text box on a whole pixel too, and it rounds a half
+   pixel of half-width downwards. Leaving this to text-align lands odd-width
+   numbers — a lone 2, a lone 0 — one pixel off from where the sprite has them.
+
+   Widths measured before the face arrives would come from the fallback font,
+   so every placement is remembered and redone once Plain 11 is really there. */
+const gauge = document.createElement("canvas").getContext("2d");
+gauge.font = '16px "RS", monospace';
+const placed = new Set();
+let metrics = false;
+
+function place(node, text, centre){
+  node.textContent = text;
+  node.dataset.cx = centre;
+  placed.add(node);
+  if(metrics) node.style.left = (centre - Math.floor(gauge.measureText(text).width/2)) + "px";
+}
+document.fonts.load('16px "RS"').then(() => {
+  metrics = true;
+  placed.forEach(n => {
+    if(!n.isConnected) return placed.delete(n);
+    n.style.left = (+n.dataset.cx - Math.floor(gauge.measureText(n.textContent).width/2)) + "px";
+  });
+});
+
+/* The card is drawn at the sprite's own 204px and scaled to fill the row: as
+   many as COLS across, dropping a column at a time until they fit, then
+   stretched the rest of the way so the board always reaches the column edge.
+
+   A fractional zoom puts the 16-unit font off the pixel grid, and with
+   smoothing off the client's glyphs lose whole stems — 41 renders as "kl".
+   So off-grid sizes hand the text back to the antialiaser: fractionally soft
+   beats crisply wrong. Whole zooms keep the hard bitmap edges.
+
+   The gap is read back out of the stylesheet rather than repeated here, so the
+   two cannot drift apart. */
+const CARD = 204, COLS = 4, MAXZ = 2;
+const GAP = parseFloat(getComputedStyle($("players")).columnGap) || 0;
+const need = (n, z) => n * CARD * z + (n - 1) * GAP;
+
+function fit(){
+  const avail = $("players").clientWidth;
+  let cols = COLS;
+  while(cols > 1 && need(cols, 1) > avail) cols--;
+  // Whole pixels per card, or the rounded-up used widths sum past the row and
+  // flex drops the last card onto the next line.
+  let z = Math.min(MAXZ, Math.floor((avail - (cols - 1) * GAP) / cols) / CARD);
+  // Narrower than a single card at 1:1, so there is nothing left to give.
+  if(z < 1) z = Math.max(1, Math.min(MAXZ, avail / CARD));
+  z = +z.toFixed(3);
+  document.documentElement.style.setProperty("--z", z);
+  document.documentElement.classList.toggle("offgrid", z % 1 !== 0);
+}
+addEventListener("resize", fit);
+fit();
 
 /* ---------------- url ---------------- */
 function syncUrl(){
@@ -319,26 +392,29 @@ function shell(name){
   const el = document.createElement("section");
   el.className = "card loading";
   el.innerHTML =
-    '<div class="plate"><div class="pname"></div><div class="grow"></div><div class="cb">CB \u2014</div>'+
-    '<button class="rm" type="button" title="Remove">\u00d7</button></div>'+
-    '<div class="tab"><div class="stats"></div><div class="total">Total level: <span class="tl">\u2014</span></div></div>'+
-    '<div class="leads"><h2>Best in group</h2><div class="chips"></div></div>'+
-    '<div class="foot"><span class="xp">\u2014 xp</span><span class="upd">loading...</span></div>';
+    '<div class="chrome">'+
+      '<div class="pname"></div>'+
+      '<button class="rm" type="button" title="Remove">×</button>'+
+      '<div class="grid"></div>'+
+      '<div class="totalv"></div>'+
+      '<div class="cb">CB —</div><div class="xp">— xp</div>'+
+    '</div>'+
+    '<div class="leads framed"><h2>Best in group</h2><div class="chips"></div>'+
+    '<span class="upd">loading...</span></div>';
   el.querySelector(".pname").textContent = name;
   el.querySelector(".rm").setAttribute("aria-label","Remove "+name);
   el.querySelector(".rm").addEventListener("click", () => remove(name));
 
-  const grid = el.querySelector(".stats");
-  SKILLS.forEach(([k,label]) => {
+  const grid = el.querySelector(".grid");
+  SKILLS.forEach(([k,label],i) => {
     const b = document.createElement("div");
-    b.className="skill"; b.dataset.skill=k; b.title=label;
-    b.innerHTML = '<span class="ico"><img alt="" loading="lazy"></span>'+
-                  '<span class="nums"><span class="cur">\u2014</span><span class="max">\u2014</span></span>';
-    const img = b.querySelector("img");
-    img.src = ICON + label + "_icon.png";
-    img.onerror = () => { img.style.display="none"; };
+    b.className="tile"; b.dataset.skill=k; b.title=label;
+    b.innerHTML = '<i style="--i:'+i+'"></i><span class="cur"></span><span class="max"></span>';
+    place(b.querySelector(".cur"), "—", 38);
+    place(b.querySelector(".max"), "—", 50);
     grid.appendChild(b);
   });
+  place(el.querySelector(".totalv"), "Total level: —", 104);
   return el;
 }
 
@@ -352,15 +428,15 @@ function emptyState(){
 function paint(el, d){
   el.classList.remove("loading","failed");
   const sk = d.latestSnapshot?.data?.skills || {};
-  el.querySelectorAll(".skill").forEach(box => {
-    const lvl = sk[box.dataset.skill]?.level ?? null;
-    box.querySelector(".cur").textContent = lvl ?? "\u2014";
-    box.querySelector(".max").textContent = lvl ?? "\u2014";
-    box.classList.toggle("zero", lvl===1 || lvl==null);
+  el.querySelectorAll(".tile").forEach(box => {
+    const lvl = String(sk[box.dataset.skill]?.level ?? "—");
+    place(box.querySelector(".cur"), lvl, 38);
+    place(box.querySelector(".max"), lvl, 50);
   });
   el.querySelector(".pname").textContent = d.displayName || d.username;
-  el.querySelector(".cb").textContent    = "CB " + (d.combatLevel ?? "\u2014");
-  el.querySelector(".tl").textContent    = num(sk.overall?.level);
+  el.querySelector(".cb").textContent    = "CB " + (d.combatLevel ?? "—");
+  // The client prints the total ungrouped, so no thousands separator here.
+  place(el.querySelector(".totalv"), "Total level: " + (sk.overall?.level ?? "—"), 104);
   el.querySelector(".xp").textContent    = short(d.exp||0) + " xp";
   el.querySelector(".upd").textContent   = ago(d.updatedAt);
 }
@@ -398,7 +474,7 @@ function leaders(){
     list.forEach(s => {
       const c=document.createElement("span");
       c.className="chip"+(s.tied?" tied":"");
-      c.textContent=s.label;
+      c.textContent=(s.tied?"=":"")+s.label+" ";
       if(s.tied) c.title="Tied for the group's highest";
       const b=document.createElement("b"); b.textContent=s.top; c.appendChild(b);
       box.appendChild(c);
@@ -410,7 +486,7 @@ function leaders(){
    skills level with each other, or several players level in one skill. */
 function highest(){
   const on = roster.filter(n => data.get(n));
-  if(!on.length){ $("gBest").textContent="\u2014"; $("gBestWho").textContent=""; return; }
+  if(!on.length){ $("gBest").textContent="—"; $("gBestWho").textContent=""; return; }
   let top=0, hits=[];
   on.forEach(n => {
     const sk = data.get(n).latestSnapshot?.data?.skills || {};
@@ -429,7 +505,7 @@ function highest(){
 
 function summarise(){
   const all=[...data.values()].filter(Boolean);
-  if(!all.length){ ["gTotal","gXp","gCb","gBest"].forEach(i=>$(i).textContent="\u2014"); $("gBestWho").textContent=""; return; }
+  if(!all.length){ ["gTotal","gXp","gCb","gBest"].forEach(i=>$(i).textContent="—"); $("gBestWho").textContent=""; return; }
   const totals = all.map(p => p.latestSnapshot?.data?.skills?.overall?.level || 0);
   $("gTotal").textContent = num(totals.reduce((a,b)=>a+b,0));
   $("gXp").textContent    = short(all.reduce((a,p)=>a+(p.exp||0),0));
@@ -503,10 +579,10 @@ async function add(raw){
   try{
     let out = await fetchPlayer(name, false);
     if(out.missing){
-      say(name+" hasn't been tracked before \u2014 registering them...");
+      say(name+" hasn't been tracked before — registering them...");
       const created = await trackNew(name);
       if(!created){
-        say("No account called \u201c"+name+"\u201d on the hiscores. Check the spelling.","err");
+        say("No account called “"+name+"” on the hiscores. Check the spelling.","err");
         busy(false); return;
       }
       out = {d: created};
@@ -542,7 +618,7 @@ $("q").addEventListener("keydown", e => { if(e.key==="Enter") add($("q").value);
 $("updateBtn").addEventListener("click", () => loadAll(true));
 $("copyBtn").addEventListener("click", async () => {
   try{ await navigator.clipboard.writeText(location.href); say("Link copied.","ok"); }
-  catch(_){ say("Copy failed \u2014 the link is in the address bar.","err"); }
+  catch(_){ say("Copy failed — the link is in the address bar.","err"); }
 });
 
 const fromUrl = new URLSearchParams(location.search).getAll("p").filter(Boolean);
